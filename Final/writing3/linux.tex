@@ -1,0 +1,25 @@
+\section{Linux}
+\subsection{Pages}
+Physical pages are the basic units of memory in the Linux kernel \cite{LinuxTextbook}. Even though processor is capable of addressing a byte the memory management unit will normally deal with pages\cite{LinuxTextbook}. Thus in terms of virtual memory, a page is the smallest unit the matters. Each page is represented with a \lstinline{struct page} structure defined in \lstinline{<linux/mm_types.h>}:
+\begin{lstlisting}
+struct page {
+    unsigned long flags;
+    atomic_t _count;
+    atomic_t _mapcount;
+    unsigned long private;
+    struct address_space *mapping;
+    pgoff_t index;
+    struct list_head lru;
+    void *virtual;
+};
+\end{lstlisting}
+The \lstinline{struct page} structure is associated with physical pages. Rather than describing the data that is contained within the pages, this structure is used by the kernel to describe the physical memory \cite{LinuxTextbook}. The kernel needs to keep track of all of the pages in the system in order to know if one has not been allocated. If a page has been allocated then the kernel needs to know who the page belongs to. 
+\subsection{Zones}
+The Linux kernel divides pages into zones based on their physical addressed and the hardware's limitations. Some pages are limited in the different ways they can be used. There are two main hardware limitations that the Linux kernel has to overcome. The first is that some devices can "perform DMA (direct memory access) to only certain memory addresses" \cite{LinuxTextbook}. The second being that "some architectures are capable of physically addressing larger amounts of memory than they can virtually address. Consequently, some memory is not permanently mapped into the kernel space" \cite{LinuxTextbook}. There are four main zones, defined in \lstinline{<linux/mmzone.h>}, that help alleviate these restrictions: \lstinline{ZONE_DMA}, \lstinline{ZONE_DMA32}, \lstinline{ZONE_NORMAL}, and \lstinline{ZONE_HIGHMEM}.  
+
+% \subsection{\lstinline{kmalloc()}}
+
+\subsection{Slab Layer}
+In Linux, the slab layer is used as a cache for data structures. The slab layer separates various objects into groups. The groups of objects are called caches, and each cache is responsible for one object type\cite{LinuxTextbook}. The caches get divided into slabs. The slabs are made up of at least one page or multiple physically contiguous pages. Each individual slab contains a number of the data structures that are being cached and can be in one of three states: full, partial, or empty \cite{LinuxTextbook}. 
+
+

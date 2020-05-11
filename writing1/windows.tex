@@ -1,0 +1,14 @@
+\section{Windows}
+\subsection{Processes}
+\noindent
+A Windows process is a container for a set of resources used when executing the instance of a program \cite{WindowsText}. 
+Windows processes are represented by and executive process (\lstinline{EPROCESS}) structure.  Like Linux, processes have their own independent virtual address space and unique process IDs. Each process points to its parent or the creator process. In Windows it is possible for processes to point to parent processes that do not exist anymore. There are several methods of viewing Windows processes. One of the most popular ways it the Task Manager.    
+
+\subsection{Threads}
+\noindent
+Threads are entities withing processes that get scheduled for execution. Windows threads are represented by executive thread objects. Windows threads consist of contents of a set of CPU registers representing the state of the processor, two stacks for executing in kernel mode and user mode, a thread-local storage, a thread ID and sometimes their own security tokens \cite{WindowsText}. A windows thread is represented by and executive thread object. Threads can be in several different states: ready, deferred ready, standby, running, waiting transition, terminated, and initialized \cite{WindowsText}.
+
+\subsection{CPU Scheduling}
+\noindent
+The Windows scheduling system is priority based. This means that a thread with one of the highest priorities and is runnable always runs. However, some high priority threads may not be able to run because they may not have access to the processors they are allowed to run on. Once the scheduler selects a thread to run, the thread runs for a given amount of time. Windows uses 32 priority levels to rank threads \cite{WindowsText}.
+

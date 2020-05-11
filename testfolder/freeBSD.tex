@@ -1,0 +1,62 @@
+\section{FreeBSD}
+\subsection{Processes}
+\noindent
+Similar to linux, FreeBSD processes are programs that are in execution.They have an address space, a set of kernel resources, and at least one thread that executes its code.FreeBSD processes  each have a unique process identifier (PID) like Linux processes. FreeBSD processes keep track of their own PID and their parent process' PID. Processes can be in the following states: \lstinline{NEW}, \lstinline{NORMA}L, or \lstinline{ZOMBIE}. Processes are marked \lstinline{NEW} when they are created with the fork system call. they are in the \lstinline{NORMAL} state when they have all of the necessary resources allocated for a it to begin executing. Processes stay in the NORMAL state until they terminate. Processes are in the \lstinline{ZOMBIE} state if it is deceased until it frees its resources and tells its parent process it has terminated \cite{Freebsdtext}. 
+
+\subsection{Threads}
+\noindent
+A FreeBSD thread is the unit of execution in a process. They need an address space and various other resources. A thread can care its resources with other threads. Threads represent a virtual processor with a full context with of register state and their own stack mapped to the address space\cite{Freebsdtext}. Threads have corresponding kernel threads that have individual kernel stacks to represent the user thread \cite{Freebsdtext}. Threads switch between \lstinline{RUNNABLE}, \lstinline{SLEEPING}, and \lstinline{STOPPED} states. In FreeBSD, a kernel thread will be awakened by a signal only if it sets the \lstinline{PCATCH} flag when it sleeps\cite{Freebsdtext}. This is similar to Linux processes with state codes \lstinline{S} and \lstinline{D}.
+
+\subsection{CPU Scheduling} %NEED MORE behavior of the various schedulers and how that impacts system behavior
+There are two schedulers available for use: the ULE scheduler introduced in FreeBSD 5.o and the traditional 4.4BSD scheduler. The scheduler must be selected at the time the kernel is built. This avoids the overhead that occurs in systems with a dynamic scheduler switch that must be traversed for each scheduler decision \cite{Freebsdtext}. Scheduling is divided into low and high level schedulers. The low level scheduler fines frequently and the high level one only runs a few times per second. The low level scheduler is run every time a thread blocks and a new one needs to be selected to run. A set of run queues maintained by the kernel are organized by priority and help simplify the task of selecting a thread to be run \cite{Freebsdtext}. There is one run queue for each CPU in the system. The high level scheduler is responsible for setting thread priorities and deciding which run queue to place them on \cite{Freebsdtext}.
+
+\subsection{Types of I/O}
+FreeBSD had three main kinds of I/O. The first is the character-device interface, then the filesystem, and lastly the socket interface with its related network devices \cite{LinuxTextbook}. 
+ The character interface "appears in the filesystem namespace and provides unstructured access to the underlying hardware. The network devices do not appear in the filesystem; they are accessible through the socket interface \cite{Freebsdtext}. 
+
+\subsection{Block Devices}
+FreeBSD dropped support of block I/O. In FreeBSD no important applications depend on block devices. This decision prevents complications to the relevant kernel code by eliminating the need for implementation of aliasing each disk of the two devices with different semantics \cite{freebsdArchitectureHandbook9}. Supporting block I/O devices requires the kernel to cache for disk devices. In turn, the block devices become unreliable. Caching data reorders the sequence of write operations \cite{freebsdArchitectureHandbook9}. This means that the application will not know the exact contents of the disk whenever it may need.
+
+
+\subsection{I/O Scheduler}
+FreeBSD, unlike Linux, does not offer multiple scheduler options. Instead it has a Common Access Method (CAM) layer that is in between the GEOM layer and the device driver layer \cite{Freebsdtext}. The Cam subsystem allows for separation of generic device drivers from the drivers controlling the I/O bus.
+
+\subsection{Filesystem}
+The Zettabyte filesystem (ZFS) similar to Linux's EXT4 file system is also case sensitive and journaled. The ZFS never overwrites existing data. This is beneficial because many snapshots and clones can be created easily with no affect on the system's performance \cite{Freebsdtext}. With the ZFS, the state of the on-disk filesystem is always consistent. Any changes that are made to the filesystem accumulate in memory and the changes are periodically assembled and written to the disk \cite{Freebsdtext}. Once the changes are on the disk, the filesystem "makes a checkpoint of the new filesystem state" \cite{Freebsdtext}. This is how the ZSF is able to always be in a consistent state. It only move between two consistent states without an inconsistent middleman. One of the notable components of FreeBSD is the use of files for all of the processes and system storage. File descriptors are used to accomplish this task. The file descriptors are accessed through pipes and sockets similar to Linux\cite{Freebsdtext}.  
+
+\subsection{Virtual-Memory System}
+The FreeBSD virtual memory system is based on the Mach 2.0 virtual memory system\cite{Freebsdtext}. FreeBSD supports the \lstinline{mmap} system call. This means that the address space is used in a less structured manner. For example, shared libraries might place data arbitrarily.Both the kernel and user processes use the same datastructures for managing their virtual memory systems.
+\begin{itemize}
+    \item \lstinline{vmspace} is used to encompass machine dependent and independent structures describing a process's address space \cite{Freebsdtext}.
+    \item \lstinline{vm_map} describes the machine independent virtual address space \cite{Freebsdtext}.
+    \item \lstinline{vm_map_entry} describes "... the mapping from a virtually contiguous range of addresses that share protection and inheritance attributes to the backing-store \lstinline{vm_object}"\cite{Freebsdtext}
+    \item \lstinline{vm_object} is a structure used to describe the sources of data \cite{Freebsdtext}.
+    \item \lstinline{shadow vm_object} is a special type of \lstinline{vm_object} that represents a modified copy of an original piece of data \cite{Freebsdtext}.
+    \item \lstinline{vm_page} is the structure that represents the physical memory being used by the virtual memory system.
+\end{itemize}
+
+\subsection{Kernel Memory Management}
+FreeBSD maps memory differently depending on the architecture. For a 64-bit address space architecture, memory is permanently be mapped into the high part of every process address space \cite{Freebsdtext}. In 32-bit architectures the kernel will map like the 64-bit architecture or it will switch between "...having the kernel occupy the whole address space and mapping the currently running process into the address space" \cite{Freebsdtext}. The first option for the 32-bit architecture is the most common. Switching processes will not affect the kernel portion of the address space if memory is permanently mapped to the higher part of the address space\cite{Freebsdtext}. This method also allows the kernel to freely read and write to the address space of the user process and restricts the user process from reading and writing to kernel processes\cite{Freebsdtext}.
+
+\subsection{Slab Allocator} 
+%behavior and purpose of the slabs.  Why are they valuable, what makes them better than just using kmalloc/free, and how do the different states you mention (full, partial, empty) impact the behavior of the allocators, etc.
+In FreeBSD a slab is "...a collection of items of identical size" \cite{Freebsdtext}. Each slab is limited to the size of a single page unless the object is larger than a page in FreeBSD 11 \cite{Freebsdtext}. The single page limit prevents fragmentation. 
+
+\subsection{Kernel Malloc}
+\lstinline{Malloc()} is the preferred method of allocating kernel memory. Its interface is similar to \lstinline{malloc()} in C. \lstinline{Malloc()} takes in a parameter of the size of memory that needs to be allocated. The kernel memory allocator uses a power of 2 strategy for small allocations and switches to a large block algorithm for allocations larger than a page.
+
+\subsection{Shared Memory}
+In FreeBSD processes create shared memory with
+\begin{lstlisting}
+void *addr = mmap(
+    void *addr, /* base address */
+    size_t len, /* length of region */
+    int prot, /* protection of region */
+    int flags, /* mapping flags */
+    int fd, /* file to map */
+    off_t offset); /* offset to begin mapping */
+\end{lstlisting}
+This shared mapping allows processes to write to a file and those changes are able to be seen by other processes. When processes do  map the same file into their address space it is important that they are viewing the same set of pages. Files being currently being used by a lcient of the virtual memory system are represented by a \lstinline{vm_object}\cite{Freebsdtext}. If a page fault occurs, the \lstinline{vm_map_entry} structure that describes the mapping to the file is used to find the appropriate page. 
+
+\subsection{Hardware Memory Management}
+The FreeBSD memory management unit "...implements address translation and access control when virtual memory is mapped onto physical memory."\cite{Freebsdtext} There are a few different memory management unit designs that are common. The first is memory resident forward mapped page tables where the tables are large contiguous arrays \cite{Freebsdtext}. The arrays are indexed by virtual addresses. The second is inverted page table also known as reverse mapped-table. The final design is is just a translation looka-side buffer. The simple hardware design gives software flexibility.

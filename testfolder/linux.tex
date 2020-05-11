@@ -1,0 +1,117 @@
+\section{Linux}
+\subsection{Processes}
+\noindent
+Processes are programs in execution. In Linux there are two different types of processes: foreground or interactive processes and background or non-interactive/automatic processes. Foreground processes are programs currently executing that the user interacts with. Background processes refer to programs executing but are not being interacted with by a user. 
+\newline
+\newline
+\noindent
+Each process is represented by a unique identifier and a \lstinline{task_struct} data structure. The task vector points to every \lstinline{task_struct} in the system. Linux processes each have unique numbers that identify them called process identifiers or PID. The init process is the parent of all processes on the system. It runs when the system boots up and manages all other processes on the system. The init process always has a PID of 1. 
+\newline
+\newline
+\noindent
+Linux processes can be in one of five states. The process state code R indicates that the process is running or runnable. If it is the current  process being served by the CPU or if the process has all of they resources necessary to run but lacks CPU access respectively. S indicates that the process is currently sleeping. Sleeping processes are waiting for the resources to necessary to run. Once the resource the sleeping process is waiting on is available, the process wakes up and becomes runnable. Additionally, the process can be awoken early and become runnable if it receives a signal. Process state code D indicates a state identical to to that of S. The only difference is that it does not wake up and become runnable if it receives a signal. Stopped processes are indicated by process state code T. These processes have stopped executing. They are not running nor are they eligible to run. This state usually occurs when a process is stopped using a signal or it is being debugged. Defunct or zombie processes are indicated by process state code Z. These processes are dead and have been halted. However, they still have entry in the process table. 
+\newline
+\newline
+\noindent
+The \lstinline{top} Linux command displays a real-time view to the processes currently running and being  managed by the kernel. The command \lstinline{ ps} provides a static view of the current processes.   
+
+
+\subsection{Threads}
+\noindent
+Linux implements threads the same as processes. To the kernel a thread is a process that shares resources with other processes. Each thread has a unique \lstinline{task_struct}. Threads are created like normal tasks except the clone system call is passed flags that correspond to specific resources to be shared. In Linux you would have n processes which results in n normal task structs and  some of the processes are set up to share specified resources. 
+\newline
+\newline
+\noindent
+The following command results in behavior identical to a normal fork with the exception that the address space, filesystem resources file descriptors and signal Handlers are shared. 
+\begin{lstlisting}
+clone (CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_SIGHAND, 0);
+\end{lstlisting}
+This new task and its parent are considered threads. The various flags provided to the \lstinline{CLONE()} help specify the new processes behavior and what resources the parent and child will be sharing.\cite{LinuxTextbook}
+
+\subsection{CPU Scheduling}
+\noindent
+The Linux scheduler utilizes different algorithms to schedule different kind of processes. The scheduler is modular in this sense. This method of various algorithms matching up with different processes is called scheduler classes. Each of the scheduler classes has a priority. Whichever scheduler is of the highest priority and has a runnable process will select which process runs next. The schedulers must account for the amount of time that a process will run so that it only runs a fair share of the processor. 
+\newline
+\newline
+\noindent
+The CPU scheduler divides its scheduling policies into two categories: realtime and normal. Realtime threads get scheduled first and normal time ones are scheduled after. Realtime policies include \lstinline{SCHED_FIFO} and \lstinline{SCHED_RR} \cite{red}. \lstinline{SCHED_FIFO}, also know as static priority scheduling defines a fixed priority to esch thread \cite{red}. The scheduler scans a list of threads and schedules the one with the highest priority that is ready to run.  \lstinline{SCHED_RR} is a round-robin policy derived from \lstinline{SCHED_FIFO}. The \lstinline{SCHED_RR} threads are also assigned a fixed priority value but threads with the same priority are scheduled round robin style within a specified time period. THe three nomal achedling policies are \lstinline{SCHED_OTHER}, \lstinline{SCHED_BATCH}, and \lstinline{SCHED_IDLE}. \lstinline{SCHED_OTHER} or \lstinline{SCHED_NORMAL} is the default scheduing policy. It uses the completely fair scheduler which provides fair access to all threads. The other two policies are intended to be used for very low priority jobs.
+
+\subsection{Block vs Character}
+In Linux, block devices necessitate more care, preparation and work that what is needed to manage character devices \cite{LinuxTextbook}. Block devices need the ability to navigate between any of the various locations on the media whereas character devices only have to track their current position\cite{LinuxTextbook}. Block devices receive their own subsystem in the Linux kernel \cite{LinuxTextbook}. The reasoning behind this decision is clear. Not only are block devices more complex than character devices, but their performance is also key. Optimizing the use of a hard disk is considered more important than the speed of a keyboard's input.
+
+\subsection{Data Structures}
+
+\subsubsection{bio Structure}
+The bio structure is the container for block I/O in Linux. This structure ... represents block I/O operations that are in flight (active) as a list of segments." \cite{LinuxTextbook} This is the main purpose of the bio structure. The segments are best described as a "... chunk of a buffer that is contiguous in memory." \cite{LinuxTextbook} Since the segments are contiguous, the buffers do not need to be. This means that the kernel is able to execute block I/O operations from multiple locations in memory. The container is defined as \lstinline{struct bio} in \lstinline{<linux/bio.h>} This is the structure with comments for each field provided in the Linux Kernel Development textbook:
+
+\begin{lstlisting}
+struct bio {
+sector_t bi_sector; /* associated sector on disk */
+struct bio *bi_next; /* list of requests */
+struct block_device *bi_bdev; /* associated block device */
+unsigned long bi_flags; /* status and command flags */
+unsigned long bi_rw; /* read or write? */
+unsigned short bi_vcnt; /* number of bio_vecs off */
+unsigned short bi_idx; /* current index in bi_io_vec */
+unsigned short bi_phys_segments; /* number of segments */
+unsigned int bi_size; /* I/O count */
+unsigned int bi_seg_front_size; /* size of first segment */
+unsigned int bi_seg_back_size; /* size of last segment */
+unsigned int bi_max_vecs; /* maximum bio_vecs possible */
+unsigned int bi_comp_cpu; /* completion CPU */
+atomic_t bi_cnt; /* usage counter */
+struct bio_vec *bi_io_vec; /* bio_vec list */
+bio_end_io_t *bi_end_io; /* I/O completion method */
+void *bi_private; /* owner-private method */
+bio_destructor_t *bi_destructor; /* destructor method */
+struct bio_vec bi_inline_vecs[0]; /* inline bio vectors */
+};
+\end{lstlisting} \cite{LinuxTextbook}
+
+
+\subsubsection{I/O Vectors}
+The \lstinline{bi_io_vec} variable from the \lstinline{struct bio} points to an array of \lstinline{struct bio_vec} that are lists of the segments of the current operation \cite{LinuxTextbook}. Each structure is treated a a vector made up of the physical page it is on, an offset from the beginning of that page, and the length of the segment. This vector describes the specific location of the segment. Multiple \lstinline{bio_vec} structures in an array form the buffer for the \lstinline{bio} structure.
+Each individual block I/O operation has \lstinline{bi_vcnt} vectors in the \lstinline{bio_vec} buffer starting with \lstinline{bi_io_vec} \cite{LinuxTextbook}. An array indexer called the \lstinline{bi_idx} points to the current  \lstinline{bio_vec} in the array \cite{LinuxTextbook}. 
+
+
+\subsubsection{Request Queue}
+Request queues, represented by \lstinline{request_queue}, are used by block I/O devices to hold pending requests \cite{LinuxTextbook}. The request queue is a doubly linked list. Each link in the list represents one block I/O request. The individual requests are are represented by \lstinline{struct request} \cite{LinuxTextbook}.
+
+
+\subsection{I/O Schedulers}
+The first I/O scheduler that was used in Linux was the Linus elevator. This scheduler is simpler than its descendents but has problems dealing with request starvation. The Deadline I/O scheduler was developed in order to address the starvation issues of the Linus elevator. However in its efforts to prevent starvation, the Deadline scheduler sacrifices global throughput. The Anticipatory scheduler builds upon the Deadline scheduler. With the deadline scheduler at its core the most important addition is an "...anticipation heuristic." \cite{LinuxTextbook} The Complete  Fair Queuing (CFQ) scheduler was designed for "specialized workloads,but in that practice actually provides good performance across multiple workloads." \cite{LinuxTextbook}. Currently the default scheduler in Linux, the CFQ scheduler's ability to work in  many scenarios makes it a valid choice. The No-op scheduler is simple. Without performing any sorting or seek pervention, this scheduler does not need any extra algorithms to function. The No-op scheduler only performs merges into a request queue. The Anticipatory, CFQ, Deadline, and No-op schedulers are available in the 2.6 kernel \cite{LinuxTextbook}. The current scheduler can be overridden with the option \lstinline{elevaator=sched_param}. Where \lstinline{sched_param} is replaced by one of the following: \lstinline{as} for Anticipatory scheduler, \lstinline{cfq} for Complete Fair Queuing, \lstinline{deadline} for the Deadline scheduler, and \lstinline{noop} for the No-op scheduler.
+
+\subsection{Pages}
+Physical pages are the basic units of memory in the Linux kernel \cite{LinuxTextbook}. Even though processor is capable of addressing a byte the memory management unit will normally deal with pages\cite{LinuxTextbook}. Thus in terms of virtual memory, a page is the smallest unit the matters. Each page is represented with a \lstinline{struct page} structure defined in \lstinline{<linux/mm_types.h>}:
+\begin{lstlisting}
+struct page {
+    unsigned long flags;
+    atomic_t _count;
+    atomic_t _mapcount;
+    unsigned long private;
+    struct address_space *mapping;
+    pgoff_t index;
+    struct list_head lru;
+    void *virtual;
+};
+\end{lstlisting}
+The \lstinline{struct page} structure is associated with physical pages. Rather than describing the data that is contained within the pages, this structure is used by the kernel to describe the physical memory \cite{LinuxTextbook}. The kernel needs to keep track of all of the pages in the system in order to know if one has not been allocated. If a page has been allocated then the kernel needs to know who the page belongs to. 
+
+\subsection{Zones}
+The Linux kernel divides pages into zones based on their physical addressed and the hardware's limitations. Some pages are limited in the different ways they can be used. There are two main hardware limitations that the Linux kernel has to overcome. The first is that some devices can "perform DMA (direct memory access) to only certain memory addresses" \cite{LinuxTextbook}. The second being that "some architectures are capable of physically addressing larger amounts of memory than they can virtually address. Consequently, some memory is not permanently mapped into the kernel space" \cite{LinuxTextbook}. There are four main zones, defined in \lstinline{<linux/mmzone.h>}, that help alleviate these restrictions: \lstinline{ZONE_DMA}, \lstinline{ZONE_DMA32}, \lstinline{ZONE_NORMAL}, and \lstinline{ZONE_HIGHMEM}. \lstinline{ZONE_DMA} contains pages that are able to undergo direct memory access (DMA), hence its name \cite{LinuxTextbook}. Like \lstinline{ZONE_DMA}, \lstinline{ZONE_DMA32}  contains pages that are capable of undergoing DMA but they can only be accessed by 32 bit devices \cite{LinuxTextbook}. Pages that are mapped regularly fall under \lstinline{ZONE_NORMAL} \cite{LinuxTextbook}. Lastly, \lstinline{ZONE_HIGHMEM} contains pages that are not permanently mapped into the kernel's address space \cite{LinuxTextbook}. These zones that the pages are partitioned into allow the system to have a pooling area to satisfy allocations as necessary.
+
+\subsection{Slab Layer}
+Kernels need to be able to allocate and free data structures. In Linux, the slab layer is used as a cache for data structures that allows for global control. The slab layer separates various objects into groups. The groups of objects are called caches, and each cache is responsible for one object type\cite{LinuxTextbook}. The caches get divided into slabs. The slabs are made up of at least one page or multiple physically contiguous pages. Each individual slab contains a number of the data structures that are being cached and can be in one of three states: full, partial, or empty \cite{LinuxTextbook}. Empty slabs contain no allocated objects, partial slabs has some alllocated and some free objects, and full slabs are completely allocated with no free objects. When a new object is requested, a partial slab, given one exists, satisfies the request \cite{LinuxTextbook}. If there are no partial slabs, the request is fulfilled by an empty slab. If there are no empty slabs, a new empty slab is created since full slabs are not able to do anything. 
+\newline
+\newline
+\noindent
+The individual caches are represented by \lstinline{kmem_cache} structures. Each structure contains three lists, one for each of the three states mentioned previously. The three lists, \lstinline{ slabs_full}, \lstinline{slabs_partial}, and \lstinline{slabs_partial}, are stored inside a \lstinline{kmem_list3} \cite{LinuxTextbook}. These lists contain all of the slabs that are associated with the cache. Each slab is represented by a slab descriptor, \lstinline{struct slab}:
+\begin{lstlisting}
+struct slab {
+    struct list_head list; /* full, partial, or empty list */
+    unsigned long colouroff; /* offset for the slab coloring */
+    void *s_mem; /* first object in the slab */
+    unsigned int inuse; /* allocated objects in the slab */
+    kmem_bufctl_t free; /* first free object, if any */
+};
+\end{lstlisting}

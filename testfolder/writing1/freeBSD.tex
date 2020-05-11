@@ -1,0 +1,18 @@
+\section{FreeBSD}
+\subsection{Processes}
+\noindent
+Similar to linux, FreeBSD processes are programs that are in execution.They have an address space, a set of kernel resources, and at least one thread that executes its code.FreeBSD processes  each have a unique process identifier (PID) like Linux processes. FreeBSD processes keep track of their own PID and their parent process' PID. Processes can be in the following states: \lstinline{NEW}, \lstinline{NORMA}L, or \lstinline{ZOMBIE}. Processes are marked \lstinline{NEW} when they are created with the fork system call. they are in the \lstinline{NORMAL} state when they have all of the necessary resources allocated for a it to begin executing. Processes stay in the NORMAL state until they terminate. Processes are in the \lstinline{ZOMBIE} state if it is deceased until it frees its resources and tells its parent process it has terminated \cite{Freebsdtext}. 
+
+\subsection{Threads}
+\noindent
+A FreeBSD thread is the unit of execution in a process. They need an address space and various other resources. A thread can care its resources with other threads. Threads represent a virtual processor with a full context with of register state and their own stack mapped to the address space\cite{Freebsdtext}. Threads have corresponding kernel threads that have individual kernel stacks to represent the user thread \cite{Freebsdtext}. Threads switch between \lstinline{RUNNABLE}, \lstinline{SLEEPING}, and \lstinline{STOPPED} states. In FreeBSD, a kernel thread will be awakened by a signal only if it sets the \lstinline{PCATCH} flag when it sleeps\cite{Freebsdtext}. This is similar to Linux processes with state codes \lstinline{S} and \lstinline{D}.
+
+\subsection{CPU Scheduling}
+\noindent
+Threads get CPU time based on their scheduling class and their scheduling priority \cite{Freebsdtext}. The thread with the highest priority class will get run by the kernel. Priorities are set using the \lstinline{rtprio} system call. Once set, they do not get changed by the kernel. Threads are assigned two priorities, one for user-mode execution and one for kernel-mode execution \cite{Freebsdtext}.  
+
+
+
+
+%This looks important
+%Historically, the kernel stack was mapped to a fixed location in the virtual address space. The reason for using a fixed mapping is that when a parent forks, its run- time stack is copied for its child. If the kernel stack is mapped to a fixed address, the child’s kernel stack is mapped to the same addresses as its parent kernel stack. Thus, all its internal references, such as frame pointers and stack-variable references, work as expected. On modern architectures with virtual address caches, mapping the kernel stack to a fixed address is slow and inconvenient. FreeBSD removes this constraint by eliminating all but the top call frame from the child’s stack after copying it from its parent so that it ret

@@ -1,0 +1,35 @@
+\documentclass[10pt, draftclsnofoot, onecolumn , 10pt, compsoc]{IEEEtran}
+\usepackage{graphicx}
+\usepackage{url}
+\usepackage{setspace}
+\usepackage{mathtools}
+%\usepackage{natbib}
+%\setcitestyle{square}
+\usepackage{listings}
+\usepackage{color}
+\usepackage{tgbonum}
+
+\usepackage[left=.75in, right=.75in, top=.75in, bottom=.75in]{geometry}
+\usepackage{comment} % enables the use of multi-line comments (\ifx \fi) 
+ 
+
+\begin{document}
+{\fontfamily{ppl}\selectfont
+
+
+
+\begin{singlespace}
+
+\input{titlePage.tex}
+\input{linux.tex}
+\input{windows.tex}
+\input{freeBSD.tex}
+\end{singlespace}
+
+
+
+\bibliographystyle{IEEEtran}
+\bibliography{bibliography}
+}
+\end{document}
+

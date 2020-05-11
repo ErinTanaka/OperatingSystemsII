@@ -1,0 +1,17 @@
+\section{FreeBSD}
+FreeBSD had three main kinds of I/O. The first is the character-device interface, then the filesystem, and lastly the socket interface with its related network devices \cite{LinuxTextbook}. 
+ The character interface
+% appears in the filesystem namespace and provides unstructured access to the underlying hardware. The network devices do not appear in the filesystem; they are accessible through the
+% socket interface. 
+
+\subsection{Block Devices}
+FreeBSD dropped support of block I/O. In FreeBSD no important applications depend on block devices. This decision prevents complications to the relevant kernel code by eliminating the need for implementation of aliasing each disk of the two devices with different semantics \cite{freebsdArchitectureHandbook9}. Supporting block I/O devices requires the kernel to cache for disk devices. In turn, the block devices become unreliable. Caching data reorders the sequence of write operations \cite{freebsdArchitectureHandbook9}. This means that the application will not know the exact contents of the disk whenever it may need.
+
+
+\subsection{Scheduler}
+FreeBSD, unlike Linux, does not offer multiple scheduler options. Instead it has a Common Access Method (CAM) layer that is in between the GEOM layer and the device driver layer \cite{Freebsdtext}. The Cam subsystem allows for separation of generic device drivers from the drivers controlling the I/O bus.
+
+\subsection{Filesystem}
+The Zettabyte filesystem (ZFS) similar to Linux's EXT4 file system is also case sensitive and journaled. The ZFS never overwrites existing data. This is beneficial because many snapshots and clones can be created easily with no affect on the system's performance \cite{Freebsdtext}. With the ZFS, the state of the on-disk filesystem is always consistent. Any changes that are made to the filesystem accumulate in memory and the changes are periodically assembled and written to the disk \cite{Freebsdtext}. Once the changes are on the disk, the filesystem "makes a checkpoint of the new filesystem state" \cite{Freebsdtext}. This is how the ZSF is able to always be in a consistent state. It only move between two consistent states without an inconsistent middleman. One of the notable components of FreeBSD is the use of files for all of the processes and system storage. File descriptors are used to accomplish this task. The file descriptors are accessed through pipes and sockets similar to Linux\cite{Freebsdtext}.  
+
+

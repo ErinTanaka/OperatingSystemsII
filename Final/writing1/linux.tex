@@ -1,0 +1,36 @@
+\section{Linux}
+\subsection{Processes}
+\noindent
+Processes are programs in execution. In Linux there are two different types of processes: foreground or interactive processes and background or non-interactive/automatic processes. Foreground processes are programs currently executing that the user interacts with. Background processes refer to programs executing but are not being interacted with by a user. 
+\newline
+\newline
+\noindent
+Each process is represented by a unique identifier and a \lstinline{task_struct} data structure. The task vector points to every \lstinline{task_struct} in the system. Linux processes each have unique numbers that identify them called process identifiers or PID. The init process is the parent of all processes on the system. It runs when the system boots up and manages all other processes on the system. The init process always has a PID of 1. 
+\newline
+\newline
+\noindent
+Linux processes can be in one of five states. The process state code R indicates that the process is running or runnable. If it is the current  process being served by the CPU or if the process has all of they resources necessary to run but lacks CPU access respectively. S indicates that the process is currently sleeping. Sleeping processes are waiting for the resources to necessary to run. Once the resource the sleeping process is waiting on is available, the process wakes up and becomes runnable. Additionally, the process can be awoken early and become runnable if it receives a signal. Process state code D indicates a state identical to to that of S. The only difference is that it does not wake up and become runnable if it receives a signal. Stopped processes are indicated by process state code T. These processes have stopped executing. They are not running nor are they eligible to run. This state usually occurs when a process is stopped using a signal or it is being debugged. Defunct or zombie processes are indicated by process state code Z. These processes are dead and have been halted. However, they still have entry in the process table. 
+\newline
+\newline
+\noindent
+The \lstinline{top} Linux command displays a real-time view to the processes currently running and being  managed by the kernel. The command \lstinline{ ps} provides a static view of the current processes.   
+
+
+\subsection{Threads}
+\noindent
+Linux implements threads the same as processes. To the kernel a thread is a process that shares resources with other processes. Each thread has a unique \lstinline{task_struct}. Threads are created like normal tasks except the clone system call is passed flags that correspond to specific resources to be shared. In Linux you would have n processes which results in n normal task structs and  some of the processes are set up to share specified resources. 
+\newline
+\newline
+\noindent
+The following command results in behavior identical to a normal fork with the exception that the address space, filesystem resources file descriptors and signal Handlers are shared. 
+\begin{lstlisting}
+clone (CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_SIGHAND, 0);
+\end{lstlisting}
+This new task and its parent are considered threads. The various flags provided to the \lstinline{CLONE()} help specify the new processes behavior and what resources the parent and child will be sharing.\cite{LinuxTextbook}
+
+\subsection{CPU Scheduling}
+\noindent
+The Linux scheduler utilizes different algorithms to schedule different kind of processes. The scheduler is modular in this sense. This method of various algorithms matching up with different processes is called scheduler classes. Each of the scheduler classes has a priority. Whichever scheduler is of the highest priority and has a runnable process will select which process runs next. The schedulers must account for the amount of time that a process will run so that it only runs a fair share of the processor.   
+
+
+

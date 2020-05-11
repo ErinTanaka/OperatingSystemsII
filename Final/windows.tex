@@ -1,0 +1,33 @@
+\section{Windows}
+\subsection{Processes}
+\noindent
+A Windows process is a container for a set of resources used when executing the instance of a program \cite{WindowsText}. 
+Windows processes are represented by and executive process (\lstinline{EPROCESS}) structure.  Like Linux, processes have their own independent virtual address space and unique process IDs. Each process points to its parent or the creator process. In Windows it is possible for processes to point to parent processes that do not exist anymore. There are several methods of viewing Windows processes. One of the most popular ways it the Task Manager.    
+
+\subsection{Threads}
+\noindent
+Threads are entities withing processes that get scheduled for execution. Windows threads are represented by executive thread objects. Windows threads consist of contents of a set of CPU registers representing the state of the processor, two stacks for executing in kernel mode and user mode, a thread-local storage, a thread ID and sometimes their own security tokens \cite{WindowsText}. A windows thread is represented by and executive thread object. Threads can be in several different states: ready, deferred ready, standby, running, waiting transition, terminated, and initialized \cite{WindowsText}.
+
+\subsection{CPU Scheduling} % NEED MORE behavior of the various schedulers and how that impacts system behavior
+\noindent
+The Windows scheduling system is priority based. This means that a thread with one of the highest priorities and is runnable always runs. However, some high priority threads may not be able to run because they may not have access to the processors they are allowed to run on. Once the scheduler selects a thread to run, the thread runs for a given amount of time. Windows uses 32 priority levels to rank threads \cite{WindowsText}.
+
+\subsection{I/O Manager}
+The I/O manager is the main component of the Windows I/O system. It manages the communication between an I/O request packet (IRP) and the corresponding device driver \cite{WindowsText}. Majority of I/O requests are represented as IRPs in Windows. The manager creates IRPs  in memory and passes a pointer to that IRP to the driver, then it gets rid of the IRP when the necessary operation is is complete \cite{WindowsText}. The use of the I/O manager as a middleman for creation and removal of the I/O packets means that there is less work for each individual driver to do. This means that drivers are simpler and thus take up less space. 
+
+\subsection{I/O Request Packets (IRP)}
+I/O request packets are used to store information necessary to process an I/O request. Since it holds all the information that the driver needs to handle I/O requests, the structure is somewhat self-contained. Additionally, IRPs hold data that is common to all drivers in the stack and information that is unique to its specific driver\cite{WindowsText}.
+
+\subsection{Scheduler}
+The I/O manager in Windows supports five priority categories: critical, high, normal, low, and very low with a default of normal\cite{WindowsText}. The five priority levels are divided into two different prioritization modes. These modes are called strategies. The first strategy is hierarchy prioritization. Each priority has a queue and the strategy decides the order that each of the operations within those queues is processed. Hierarchy prioritization gives more important I/O requests priority over background tasks like indexing or virus scanning. The idle prioritization strategy implements a separate queue for non-idle I/O. Any non-idle, hierarchy operations get processed before the the idle I/O\cite{WindowsText}. This means that it would be possible to starve an idle I/O operation if there is one non-idle request, it would be attended to before any idle ones. The idle strategy has a timer to prevent this issue. The timer monitors the queue and ensures that at least one I/O request gets removed from the queue every half second\cite{WindowsText}. Additionally, the strategy waits for 50 milliseconds after a non-idle I/O finishes\cite{WindowsText}. This waiting period prevents any idle I/O currently on the queue from occurring in the middle of non-idle I/O.  
+
+\subsection{Memory Manager}
+The Windows memory manager has two main tasks. The first task of the memory manager is to translate or map a process's "...virtual address space into physical memory so that when a thread running a thread running in the context of that process reads or writes to the virtual address space, the correct physical address is referenced" \cite{WindowsText}. The second job of the memory manager is "Paging some of the contents of memory to disk when it becomes overcommitted... and bringing the contents back into physical memory when needed"\cite{WindowsText}. In addition to mapping virtual address space to physical and pageing and retrieving data, the memory manager provides a set of services. These services are memory mapped files, copy-on-write memory, support for applications that use a large, sparse address spaces, and provides a way for processes to allocate large amounts of physical memory\cite{WindowsText}. The memory manager is fully re-entrantand supports
+simultaneous execution on multiprocessor systems\cite{WindowsText}. This means that if two threads are running simultaneously, they can acquire the resources they need in a manner that they will not corrupt each other's data.
+
+
+\subsection{Pages}
+Pages are used to divide up the virtual address space. The processors that Windows runs on support two page sizes. The actual sizes vary by processor architecture but they are called large and small\cite{WindowsText}. Large pages speed up address translations but attempts to allocate large pages may fail if the system has been running for too long. Pages in a process can either be free, reserved, committed, or shareable. Committed and shareable pages become valid pages in physical memory when they are accessed\cite{WindowsText}. Committed pages cannot be shared with other processes. Shareable ones, like their label implies, can be shared with other processes but could also only be used by one.
+
+\subsection{Shared Memory and Mapped Files}
+Shared memory is implemented using \lstinline{section objects}, which are exposed as \lstinline{file mapping objects} from the memory manager \cite{WindowsText}. The \lstinline{file mapping objects} are used to map virtual addresses. A section can be accessed by one process or many. Mapped files can by used by applications to perform I/O operations by making the file appear in the application's address space\cite{WindowsText}.

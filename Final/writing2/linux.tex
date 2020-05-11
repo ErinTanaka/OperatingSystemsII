@@ -1,0 +1,51 @@
+%I/O, both block and character, and provided functionality such as data structures, algorithms, and cryptography. For I/O, specifically examine the different types of devices, I/O scheduling, and the like.
+\section{Linux}
+
+\subsection{Block vs Character}
+In Linux, block devices necessitate more care, preparation and work that what is needed to manage character devices \cite{LinuxTextbook}. Block devices need the ability to navigate between any of the various locations on the media whereas character devices only have to track their current position\cite{LinuxTextbook}. Block devices receive their own subsystem in the Linux kernel \cite{LinuxTextbook}. The reasoning behind this decision is clear. Not only are block devices more complex than character devices, but their performance is also key. Optimizing the use of a hard disk is considered more important than the speed of a keyboard's input.
+
+\subsection{Data Structures}
+
+\subsubsection{bio Structure}
+The bio structure is the container for block I/O in Linux. This structure ... represents block I/O operations that are in flight (active) as a list of segments." \cite{LinuxTextbook} This is the main purpose of the bio structure. The segments are best described as a "... chunk of a buffer that is contiguous in memory." \cite{LinuxTextbook} Since the segments are contiguous, the buffers do not need to be. This means that the kernel is able to execute block I/O operations from multiple locations in memory. The container is defined as \lstinline{struct bio} in \lstinline{<linux/bio.h>} This is the structure with comments for each field provided in the Linux Kernel Development textbook:
+
+\begin{lstlisting}
+struct bio {
+sector_t bi_sector; /* associated sector on disk */
+struct bio *bi_next; /* list of requests */
+struct block_device *bi_bdev; /* associated block device */
+unsigned long bi_flags; /* status and command flags */
+unsigned long bi_rw; /* read or write? */
+unsigned short bi_vcnt; /* number of bio_vecs off */
+unsigned short bi_idx; /* current index in bi_io_vec */
+unsigned short bi_phys_segments; /* number of segments */
+unsigned int bi_size; /* I/O count */
+unsigned int bi_seg_front_size; /* size of first segment */
+unsigned int bi_seg_back_size; /* size of last segment */
+unsigned int bi_max_vecs; /* maximum bio_vecs possible */
+unsigned int bi_comp_cpu; /* completion CPU */
+atomic_t bi_cnt; /* usage counter */
+struct bio_vec *bi_io_vec; /* bio_vec list */
+bio_end_io_t *bi_end_io; /* I/O completion method */
+void *bi_private; /* owner-private method */
+bio_destructor_t *bi_destructor; /* destructor method */
+struct bio_vec bi_inline_vecs[0]; /* inline bio vectors */
+};
+\end{lstlisting} \cite{LinuxTextbook}
+
+
+\subsubsection{I/O Vectors}
+The \lstinline{bi_io_vec} variable from the \lstinline{struct bio} points to an array of \lstinline{struct bio_vec} that are lists of the segments of the current operation \cite{LinuxTextbook}. Each structure is treated a a vector made up of the physical page it is on, an offset from the beginning of that page, and the length of the segment. This vector describes the specific location of the segment. Multiple \lstinline{bio_vec} structures in an array form the buffer for the \lstinline{bio} structure.
+Each individual block I/O operation has \lstinline{bi_vcnt} vectors in the \lstinline{bio_vec} buffer starting with \lstinline{bi_io_vec} \cite{LinuxTextbook}. An array indexer called the \lstinline{bi_idx} points to the current  \lstinline{bio_vec} in the array \cite{LinuxTextbook}. 
+
+
+\subsubsection{Request Queue}
+Request queues, represented by \lstinline{request_queue}, are used by block I/O devices to hold pending requests \cite{LinuxTextbook}. The request queue is a doubly linked list. Each link in the list represents one block I/O request. The individual requests are are represented by \lstinline{struct request} \cite{LinuxTextbook}.
+
+
+\subsection{I/O Schedulers}
+The first I/O scheduler that was used in Linux was the Linus elevator. This scheduler is simpler than its descendents but has problems dealing with request starvation. The Deadline I/O scheduler was developed in order to address the starvation issues of the Linus elevator. However in its efforts to prevent starvation, the Deadline scheduler sacrifices global throughput. The Anticipatory scheduler builds upon the Deadline scheduler. With the deadline scheduler at its core the most important addition is an "...anticipation heuristic." \cite{LinuxTextbook} The Complete  Fair Queuing (CFQ) scheduler was designed for "specialized workloads,but in that practice actually provides good performance across multiple workloads." \cite{LinuxTextbook}. Currently the default scheduler in Linux, the CFQ scheduler's ability to work in  many scenarios makes it a valid choice. The No-op scheduler is simple. Without performing any sorting or seek pervention, this scheduler does not need any extra algorithms to function. The No-op scheduler only performs merges into a request queue. The Anticipatory, CFQ, Deadline, and No-op schedulers are available in the 2.6 kernel \cite{LinuxTextbook}. The current scheduler can be overridden with the option \lstinline{elevaator=sched_param}. Where \lstinline{sched_param} is replaced by one of the following: \lstinline{as} for Anticipatory scheduler, \lstinline{cfq} for Complete Fair Queuing, \lstinline{deadline} for the Deadline scheduler, and \lstinline{noop} for the No-op scheduler.
+
+% \subsection{File System}
+
+% io ports
